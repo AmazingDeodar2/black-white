@@ -618,13 +618,13 @@ document.getElementById('btnClearData').onclick = function() {
       else { endTitle.textContent='失败'; endText.textContent='你在地牢中陨落，重新来过吧。'; }
     }
 
-    function resetGame(){ stage = 1;end=0; if(deathcount>=50){damageplus = 20;}
+    function resetGame(){ stage = 1;end=0; if(deathcount>=50){damageplus = 20;}else{damageplus = 0;};
     player.hp = 14;
   player.maxHp = 14;
   player.mp = 14;
   player.maxMp = 14;
   player.atkToHit = 80;
-  player.spellToHit = 70; enemy = createEnemyForStage(stage); actionLog.innerHTML='';stageData.forEach(s=>{ if(s.type==='battle'&&s.enemy) s.enemy.hp=s.enemy.maxHp; }); 
+  player.spellToHit = 70;ball = roll(100); enemy = createEnemyForStage(stage); actionLog.innerHTML='';stageData.forEach(s=>{ if(s.type==='battle'&&s.enemy) s.enemy.hp=s.enemy.maxHp; }); 
     const attackBtn = document.getElementById('btnAttack');
     const spellBtn = document.getElementById('btnSpell');
     if (attackBtn) {
@@ -653,3 +653,4 @@ document.getElementById('btnClearData').onclick = function() {
   </script>
 </body>
 </html>
+
