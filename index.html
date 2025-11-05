@@ -483,11 +483,11 @@ document.getElementById('btnClearData').onclick = function() {
     }
       if(stage==4){
       
-      let upHP = rollND(3,6,-4)
+      let upHP = rollND(2,9,-3)
       player.maxHp += upHP; player.hp = Math.min(player.maxHp, player.hp + upHP);
       eventChoices.style.display='none';
       if(upHP>=0){
-        eventText.textContent = `符咒很顺畅地融入了你的体中，经络变得更舒畅了，生命上限提高了3d6-4=${upHP}！豆池看起来对自己的作品很满意。`;
+        eventText.textContent = `符咒很顺畅地融入了你的体中，经络变得更舒畅了，生命上限提高了2d9-3=${upHP}！豆池看起来对自己的作品很满意。`;
       }else{
         unlockAchievement(5);
         eventText.textContent = `符咒看起来与你有点八字不合，当场就爆炸了，生命上限降低了1点！你回头发现豆池早就跑没影了。`;
@@ -653,4 +653,5 @@ document.getElementById('btnClearData').onclick = function() {
   </script>
 </body>
 </html>
+
 
