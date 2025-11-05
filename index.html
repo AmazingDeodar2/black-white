@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>严哥的百梦之旅</title>
+  <style>
+    :root{--bg:#0f1221;--panel:#1a1d2b;--accent:#e67e22;--text:#e6eef8}
+    html,body{height:100%;margin:0;font-family: "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;background:linear-gradient(180deg,#0b0c12 0%, #12121a 100%);color:var(--text)}
+    .app{max-width:1000px;margin:24px auto;padding:18px;box-sizing:border-box}
+    .card{background:var(--panel);border-radius:12px;padding:18px;box-shadow:0 6px 24px rgba(0,0,0,0.6)}
+    header{display:flex;align-items:center;gap:12px}
+    h1{margin:0;font-size:20px}
+    .center{display:flex;justify-content:center;align-items:center}
+
+    /* screens */
+    .screen{display:none}
+    .screen.active{display:block}
+
+    /* start screen */
+    .start-area{height:360px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px}
+    .btn{background:var(--accent);border:none;padding:10px 18px;border-radius:8px;color:#fff;font-weight:600;cursor:pointer}
+    .btn.secondary{background:#3a3f55}
+
+    /* story / event / end images */
+    .scene{display:flex;gap:18px;align-items:center}
+    .scene img{width:160px;height:160px;object-fit:cover;border-radius:8px;background:#222}
+    .scene .text{flex:1}
+
+    /* battle layout */
+    .battle{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+    .unit{background:#10121a;padding:12px;border-radius:10px;min-height:160px}
+    .unit img{width:160px;height:160px;object-fit:cover;border-radius:6px}
+    .unit .meta{margin-top:8px}
+    .hpbar, .mpbar{height:12px;background:#222;border-radius:6px;overflow:hidden;margin-top:6px}
+    .hpbar > i{display:block;height:100%;background:#e74c3c;width:100%}
+    .mpbar > i{display:block;height:100%;background:#3498db;width:100%}
+
+    .controls{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap}
+    .log{margin-top:12px;background:#0f1116;padding:10px;border-radius:8px;height:120px;overflow:auto;font-size:13px}
+
+    /* footer */
+    footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+
+    /* small helpers */
+    .stat{font-size:13px}
+    .muted{color:#9aa3bf}
+    
+  </style>
+</head>
+<body>
+  <div class="app card">
+    <header>
+      <h1>严哥的百梦之旅</h1>
+    </header>
+
+    <!-- Start Screen -->
+    <section id="start" class="screen active">
+      <div class="start-area">
+        <h2>欢迎光临 百梦大楼</h2>
+        <button id="btnStart" class="btn">开始</button>
+        <button id="btnAchievement" class="btn secondary">查看成就</button>
+        <button id="btnClearData" class="btn secondary" style="position: absolute; bottom: 20px; right: 20px; padding: 8px 14px; font-size: 14px; border-radius: 6px; background-color: #e67e22; color: #fff; font-weight: 600; cursor: pointer;">
+          清除所有数据
+        </button>
+        
+      </div>
+    </section>
+
+    <!-- Achievement Screen -->
+    <section id="achievement" class="screen">
+      <div class="card" style="padding:20px;">
+        <h2>成就一览</h2>
+        <p class="muted">刷新会重置网页，请不要刷新。</p>
+        <div id="achievementList" style="margin-top:16px;display:flex;flex-direction:column;gap:10px;"></div>
+        <div style="margin-top:20px;text-align:center;">
+          <button id="btnReturnStart2" class="btn">返回开始</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Story / Import Screen -->
+    <section id="story" class="screen">
+      <div class="scene">
+        <img src="yan.png" alt="角色图（占位）" onerror="this.style.opacity=1">
+        <div class="text">
+          <h3>严槐序</h3>
+          <p id="storyText">我……这是睡着了？百梦大楼？怎么会是这个地方，那个人……不对！萧欣妍，快停下！不行，我得进去看看</p>
+          <div style="margin-top:12px">
+            <button id="btnNextStory" class="btn">进入百梦大楼</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Game Screen -->
+    <section id="game" class="screen">
+      <div class="card" style="background:transparent;padding:6px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div id="stageName">stageName</div>
+            <div class="muted" id="stageType">stageType</div>
+          </div>
+          <div class="muted"><span id="stageIndex">1</span>/10</div>
+        </div>
+
+        <!-- battle area -->
+        <div id="battleArea" style="margin-top:12px">
+          <div class="battle">
+            <div class="unit" id="playerPanel">
+              <img id="playerImg" src="yan.png" alt="玩家图" onerror="this.style.opacity=1">
+              <div class="meta">
+                <div><strong id="playerName">严槐序</strong></div>
+                <div class="stat">HP: <span id="playerHP">HP</span>/<span id="playerMaxHP">HP</span></div>
+                <div class="hpbar"><i id="playerHPBar" style="width:100%"></i></div>
+                <div class="stat">MP: <span id="playerMP">MP</span>/<span id="playerMaxMP">MP</span></div>
+                <div class="mpbar"><i id="playerMPBar" style="width:100%"></i></div>
+                <div class="controls">
+                  <button class="btn" id="btnAttack">斗殴</button>
+                  <button class="btn secondary" id="btnSpell">深渊之息</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="unit" id="enemyPanel">
+              <img id="enemyImg" src="" alt="敌人图" onerror="this.style.opacity=1">
+              <div class="meta">
+                <div><strong id="enemyName">enemyName</strong></div>
+                <div class="stat">HP: <span id="enemyHP">HP</span>/<span id="enemyMaxHP">HP</span></div>
+                <div class="hpbar"><i id="enemyHPBar" style="width:100%"></i></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="log" id="actionLog"></div>
+
+          <footer>
+            <div class="muted">回合：<span id="turnIndicator">玩家回合</span></div>
+            <div>
+              
+            </div>
+          </footer>
+        </div>
+
+        <!-- event area (hidden or shown depending on stage type) -->
+        <div id="eventArea" style="display:none;margin-top:12px">
+          <div class="scene">
+            <img id="eventImg"src="image2.png" alt="事件图" onerror="this.style.opacity=1">
+            <div class="text">
+              <p id="eventText">eventText</p>
+              <div style="margin-top:12px" id="eventChoices">
+                <button class="btn" id="choiceHP">choiceHP</button>
+                <button class="btn secondary" id="choiceMP">choiceMP</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- victory / defeat controls appear dynamically -->
+      </div>
+    </section>
+
+    <!-- End Screen -->
+    <section id="end" class="screen">
+      <div class="scene">
+        <img src="yan.png" alt="结束图" onerror="this.style.opacity=0.25">
+        <div class="text">
+          <h3 id="endTitle">游戏结束</h3>
+          <p id="endText">这里是还没做完的结束页面</p>
+          <div style="margin-top:12px">
+            <button id="btnReturnStart" class="btn">返回开始</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+
+  </div>
+
+  <script>
+    // 关卡与类型：奇数战斗 偶数事件
+    const totalStages = 10;
+    let stage = 1;
+    let damageplus = 0;
+    let deathcount=0;
+    let end=0;
+    const stageData = [
+      { type: 'battle', name: '12F 未装修的空房间',subtitle:'这里为什么有史莱姆啊！' ,enemy: { name: '史莱姆', img: 'shi.png', hp: 5, maxHp: 5, atkToHit:60, dmgDice:[1,4,0] } },
+      { type: 'event', name: '14F 迷雾的废弃办公室', img: 'ye.png', desc: '“严老哥好久不见啊！今天看起来挺实心的，好像穿不过去啊。正好，我这有一个苹果一瓶水，实在是吃不下了，严老哥要不要选个拿走？”',HP:'来都来了，吃个苹果吧',MP:'来都来了，喝口水吧',
+    
+      },
+
+
+      { type: 'battle', name: '16F 洪水收藏室',subtitle:'是银环蛇，她果然在这里' ,enemy: { name: '银环蛇', img: 'snake.png', hp: 12, maxHp: 12, atkToHit:50, dmgDice:[1,4,2] } },
+      { type: 'event', name: '18F 蜂巢', img: 'dou.png', desc: '“你怎么在这里啊，没看到我正忙着呢。哦你问萧欣妍去哪了，我怎么知道啊，桌子上有两张符咒，你拿去看着用吧。”',HP:'拿起黄色符咒',MP:'拿起蓝色符咒',
+    
+      },
+
+      { type: 'battle', name: '20F 泳池',subtitle:'已经被修格斯占领了，情况不容乐观' ,enemy: { name: '修格斯', img: 'xiu.png', hp: 20, maxHp: 20, atkToHit:40, dmgDice:[2,6,0] } },
+      { type: 'event', name: '10F 白芍的餐厅', img: 'cha.png', desc: '“欢迎光临白芍的餐厅！请问各位想来办理自助餐套餐登记吗？69.9一位非常划算的~只需要在大从点评上点点这个……嗯嗯，这里点一下就好了呢”',HP:'点一份盖浇饭',MP:'点一份榴莲披萨',
+    
+      },
+
+      { type: 'battle', name: '8F 风情酒吧',subtitle:'真难缠，事情越来越棘手了' ,enemy: { name: '哀歌', img: 'song.png', hp: 30, maxHp: 30, atkToHit:80, dmgDice:[1,8,2] } },
+      { type: 'event', name: '6F 图书博物馆', img: 'star.png', desc: '“诶嘿！我们是第一次见面吧！我是海星哦，再往下走就有很危险的东西了，你做好准备了嘛？我这里有一次改变命运的机会，要试试嘛？”',HP:'投掷海星手上的骰子',MP:'只剩最后一步了，直接冲！',
+    
+      },
+
+      { type: 'battle', name: '4F 岛屿',subtitle:'把她还给我！' ,enemy: { name: '白伊湄', img: 'bai.png', hp: 50, maxHp: 50, atkToHit:50, dmgDice:[2,4,4] } },
+      { type: 'event', name: '2F 出口', img: 'xiao.png', desc: '出口处，你看到了那个红色的身影，她看上去没有受伤，只是不安地摆弄着脖子上的耳机',HP:'萧欣妍，没事吧！',MP:'怎么跑这里来了！',
+    
+      },
+
+      { type: 'battle', name: '12F 未装修的空房间',subtitle:'奇怪，这是什么东西？' ,enemy: { name: '海藻球', img: 'ball.png', hp: 5, maxHp: 5, atkToHit:60, dmgDice:[1,4,0] } },
+      { type: 'event', name: '2F 出口', img: 'qiu.png', desc: '“好久不见了，哥哥”',HP:'“麦秋？”',MP:'“真的是你吗！”',
+    
+      },
+    // 更多关卡占位...
+      ];
+    // 玩家与敌人模板（可扩展/占位）
+    const player = {name:'严槐序', hp:14, maxHp:14, mp:14, maxMp:14, atkToHit:80, spellToHit:70};
+    function createEnemyForStage(stageIndex){
+      //return {name:`敌人 ${stageIndex}`, hp:5, maxHp:10 , atkToHit:75, dmgDice:[2,4]};
+      return stageData[stage-1].enemy
+    }
+    // 骰子函数
+    function roll(dSides){return Math.floor(Math.random()*dSides)+1}
+    function rollND(n,d,s){let sum=0;for(let i=0;i<n;i++)sum+=roll(d);return sum+s}
+    
+    let enemy = createEnemyForStage(stage);
+    
+    let playerTurn = true; // 我方先手
+
+    // dom refs
+    const screens = {start:byId('start'),story:byId('story'),game:byId('game'),end:byId('end'),achievement: byId('achievement')};
+    const btnStart = byId('btnStart'), btnNextStory = byId('btnNextStory');
+    const btnAttack = byId('btnAttack'), btnSpell = byId('btnSpell');
+    const actionLog = byId('actionLog');
+    const stageName = byId('stageName'), stageType = byId('stageType'), stageIndex = byId('stageIndex');
+    const playerHP = byId('playerHP'), playerMaxHP = byId('playerMaxHP'), playerMP = byId('playerMP'), playerMaxMP = byId('playerMaxMP');
+    const playerHPBar = byId('playerHPBar'), playerMPBar = byId('playerMPBar');
+    const enemyHP = byId('enemyHP'), enemyMaxHP = byId('enemyMaxHP'), enemyHPBar = byId('enemyHPBar');
+    const turnIndicator = byId('turnIndicator');
+    const eventArea = byId('eventArea'), battleArea = byId('battleArea');
+    const eventText = byId('eventText'), eventChoices = byId('eventChoices');
+    const choiceHP = byId('choiceHP'), choiceMP = byId('choiceMP');
+    const endTitle = byId('endTitle'), endText = byId('endText');
+    const enemyImg = byId('enemyImg'), enemyName = byId('enemyName');
+    const eventImg = byId('eventImg');
+
+    function byId(id){return document.getElementById(id)}
+
+    // 切换显示
+    function showScreen(name){for(const k in screens){screens[k].classList.remove('active')}screens[name].classList.add('active')}
+
+    function loadGameData() {
+  const savedAchievements = localStorage.getItem('achievements');
+  const savedDeathCount = localStorage.getItem('deathcount');
+  
+  if (savedAchievements) {
+    achievements = JSON.parse(savedAchievements);
+  }
+  if (savedDeathCount) {
+    deathcount = parseInt(savedDeathCount, 10);
+  }
+}
+
+// 每次更新后保存成就和死亡次数
+function saveGameData() {
+  localStorage.setItem('achievements', JSON.stringify(achievements));
+  localStorage.setItem('deathcount', deathcount.toString()); // 保存死亡次数
+}
+
+
+
+// 增加死亡次数并保存
+function incrementDeathCount() {
+  deathcount++;
+  saveGameData(); // 死亡次数增加后保存数据
+}
+    // 初始化/刷新界面显示
+    function refreshUI(){
+      let t = 0;
+      
+      if(stage === 1 && roll(100)===1){t=10;unlockAchievement(4)}else{t=0};
+      if(stage===10 && end===1){t=2;unlockAchievement(7)}else{t=0};
+      stageName.textContent = stageData[stage-1].name;
+      stageIndex.textContent = stage;
+      const isBattle = (stage % 2 === 1);
+      stageType.textContent = stageData[stage-1+t].subtitle;
+      if(isBattle){
+        
+        battleArea.style.display = '';
+        eventArea.style.display = 'none';
+        // update units
+        playerMaxHP.textContent = player.maxHp; playerHP.textContent = Math.max(0, player.hp);
+        playerMaxMP.textContent = player.maxMp; playerMP.textContent = Math.max(0, player.mp);
+        enemyImg.src = stageData[stage-1+t].enemy.img
+        enemyName.textContent = stageData[stage-1+t].enemy.name
+        enemyMaxHP.textContent = stageData[stage-1+t].enemy.maxHp; enemyHP.textContent = Math.max(0, enemy.hp);
+        playerHPBar.style.width = Math.max(0, (player.hp/player.maxHp)*100) + '%';
+        playerMPBar.style.width = Math.max(0, (player.mp/player.maxMp)*100) + '%';
+        enemyHPBar.style.width = Math.max(0, (enemy.hp/enemy.maxHp)*100) + '%';
+        turnIndicator.textContent = playerTurn? '玩家回合':'敌方回合';
+      } else {
+        // 事件
+        unlockAchievement(1);
+        battleArea.style.display = 'none';
+        eventArea.style.display = '';
+        eventText.textContent = stageData[stage-1+t].desc;
+        eventChoices.style.display = '';
+        eventImg.src = stageData[stage-1+t].img;
+        choiceHP.textContent = stageData[stage-1+t].HP;
+        choiceMP.textContent = stageData[stage-1+t].MP
+      }
+    }
+
+    // === 成就系统 ===
+
+      // 成就数据结构：每项含 id, name, hint（线索）, desc（完整描述）, unlocked
+      let achievements = [
+        { id: 1, name: "初入百梦", hint: "你开始了百梦之旅。", desc: "进入一次游戏", unlocked: false },
+        { id: 2, name: "下一次循环", hint: "你在大厦中不断徘徊", desc: "累积死亡50次,你变强了", unlocked: false },
+        { id: 3, name: "她在这里", hint: "你找到了那个人", desc: "救回萧欣妍", unlocked: false },
+        { id: 4, name: "ta在这里", hint: "你遇见了那个存在", desc: "遇见海藻球", unlocked: false },
+        { id: 5, name: "肇事逃逸", hint: "你手上的符咒发生了爆炸", desc: "在选择黄符咒时损失了血量", unlocked: false },
+        { id: 6, name: "最强吃货", hint: "你在旅行中吃了个饱", desc: "血量上限超过50", unlocked: false },
+        { id: 7, name: "她在这里2", hint: "你找到了那个人", desc: "救回严麦秋", unlocked: false },
+        
+      ];
+
+      // 显示成就界面
+      function showAchievements() {
+        showScreen('achievement');
+        const list = document.getElementById('achievementList');
+        list.innerHTML = '';
+
+        achievements.forEach(a => {
+          const div = document.createElement('div');
+          div.style.background = '#1a1d2b';
+          div.style.padding = '12px 16px';
+          div.style.borderRadius = '8px';
+          div.style.border = a.unlocked ? '1px solid #7ed957' : '1px solid #444';
+          div.innerHTML = a.unlocked
+            ? `<b style="color:#7ed957">✅ ${a.name}</b><br><span>${a.desc}</span>`
+            : `<b style="color:#999">❌ ${a.name}</b><br><span class="muted">${a.hint}</span>`;
+          list.appendChild(div);
+        });
+      }
+
+      // === 成就检测（示例）===
+      // 在游戏流程中对应的事件里调用这些来解锁：
+      function unlockAchievement(id) {
+        const a = achievements.find(x => x.id === id);
+        if (a && !a.unlocked) a.unlocked = true;
+        saveGameData(); // 解锁成就后保存数据
+      }
+
+      // 示例：通关时解锁
+      // 在 finishGame(true) 中添加：
+      /*
+      unlockAchievement(6);
+      showAchievements();
+      */
+
+      // === 按钮绑定 ===
+      document.getElementById('btnAchievement').onclick = () => { showAchievements(); };
+      document.getElementById('btnReturnStart2').onclick = () => { showScreen('start'); };
+
+
+    // 日志
+    function log(s){const p=document.createElement('div');p.innerHTML=s;actionLog.prepend(p)}
+
+    
+
+    // 战斗流程部分
+    function playerActionAttack(){
+      if(!playerTurn)return; // 只有回合时可点
+      // 命中骰子 1~100 < atkToHit => 命中
+      const hitRoll = roll(100);
+      const success = hitRoll <= player.atkToHit;
+      log(`<b>严槐序 斗殴</b> — 命中骰: ${hitRoll} / ${player.atkToHit} ${success? '<span style="color:#7ed957">命中</span>':'<span style="color:#e35d5d">未命中</span>'}`);
+      if(!success){
+        playerTurn = false; refreshUI(); return enemyTurn();
+      }
+      const dmg = rollND(2,4,damageplus); // 2d4
+      enemy.hp = Math.max(0, enemy.hp - dmg);
+      log(`造成伤害: ${dmg}（2d4+${damageplus}） — 敌方剩余HP ${enemy.hp}/${enemy.maxHp}`);
+      refreshUI();
+      checkBattleEnd();
+      playerTurn = false; refreshUI();
+      setTimeout(enemyTurn, 600);
+    }
+
+    function playerActionSpell(){
+      if(!playerTurn) return;
+      if(player.mp < 2){ log('<span style="color:#eaa">MP不足</span>'); return }
+      player.mp -= 2;
+      const hitRoll = roll(100);
+      const success = hitRoll <= player.spellToHit;
+      log(`<b>严槐序 深渊之息</b> — 命中骰: ${hitRoll} / ${player.spellToHit} ${success? '<span style="color:#7ed957">命中</span>':'<span style="color:#e35d5d">未命中</span>'}`);
+      if(!success){ refreshUI(); playerTurn=false; return setTimeout(enemyTurn,600); }
+      const dmg = rollND(2,6,2); // 1d8+2
+      enemy.hp = Math.max(0, enemy.hp - dmg);
+      log(`造成伤害: ${dmg}（2d6+2） — 敌方剩余HP ${enemy.hp}/${enemy.maxHp}`);
+      refreshUI();
+      checkBattleEnd();
+      playerTurn = false; refreshUI();
+      setTimeout(enemyTurn, 600);
+    }
+
+    function enemyTurn(){
+      if(enemy.hp <= 0 || player.hp <= 0) return;
+      // 敌方普通攻击
+      const hitRoll = roll(100);
+      const success = hitRoll <= enemy.atkToHit;
+      log(`<b>${enemy.name}</b> 斗殴 — 命中骰: ${hitRoll} / ${enemy.atkToHit} ${success? '<span style="color:#7ed957">命中</span>':'<span style="color:#e35d5d">未命中</span>'}`);
+      if(!success){ playerTurn = true; refreshUI(); return }
+      // 敌方伤害占位：2d3
+      const dmg = rollND(enemy.dmgDice[0],enemy.dmgDice[1],enemy.dmgDice[2]);
+      player.hp = Math.max(0, player.hp - dmg);
+      log(`严槐序受到伤害: ${dmg}(${enemy.dmgDice[0]}d${enemy.dmgDice[1]}+${enemy.dmgDice[2]} — 严槐序剩余HP ${player.hp}/${player.maxHp}`);
+      refreshUI();
+      checkBattleEnd();
+      playerTurn = true; refreshUI();
+    }
+
+    function checkBattleEnd(){
+      if(enemy.hp <= 0){
+        log('<b style="color:#7ed957">敌方被击败！</b>');
+        // 胜利按钮
+        const nextBtn = document.createElement('button'); nextBtn.className='btn'; nextBtn.textContent='进入下个楼层';
+        nextBtn.onclick = ()=>{stage++; if(stage>totalStages) return finishGame(true); startStage();}
+        battleArea.appendChild(nextBtn);
+      }
+      if(player.hp <= 0){
+        const attackBtn = document.getElementById('btnAttack');
+        const spellBtn = document.getElementById('btnSpell');
+          if (attackBtn) attackBtn.disabled = true;
+          if (spellBtn) spellBtn.disabled = true;
+          attackBtn.style.opacity = 0.5;
+          spellBtn.style.opacity = 0.5;
+          attackBtn.style.cursor = 'not-allowed';
+          spellBtn.style.cursor = 'not-allowed';
+          incrementDeathCount();
+        if(deathcount==50){unlockAchievement(2)}
+        log('<b style="color:#e35d5d">你已阵亡</b>');
+        const backBtn = document.createElement('button'); backBtn.className='btn'; backBtn.textContent='返回开始';
+        backBtn.onclick = ()=>{resetGame(); showScreen('start')}
+        battleArea.appendChild(backBtn);
+      }
+    }
+
+    // 事件处理
+    function clearGameData() {
+  localStorage.removeItem('achievements'); // 删除成就数据
+  localStorage.removeItem('deathcount');   // 删除死亡次数数据
+  achievements = []; // 清空成就数组
+  deathcount = 0;    // 重置死亡次数
+  alert("游戏数据已清除");
+  location.reload(); // 刷新页面
+}
+
+// 清除数据按钮的绑定
+document.getElementById('btnClearData').onclick = function() {
+  clearGameData(); // 清除游戏数据
+};
+    choiceHP.onclick = ()=>{
+      if(stage==2){
+      // 提升HP上限并回复
+      eventImg.src = 'ye2.png'
+      let upHP = rollND(1,6,0)
+      player.maxHp += upHP; player.hp = Math.min(player.maxHp, player.hp + upHP);
+      eventChoices.style.display='none';
+      eventText.textContent = `这个苹果好像有些充满了奇异的生命力，生命上限提高了1d6=${upHP}！叶落看着你笑了笑，转身离开了。`;
+    }
+      if(stage==4){
+      
+      let upHP = rollND(3,6,-4)
+      player.maxHp += upHP; player.hp = Math.min(player.maxHp, player.hp + upHP);
+      eventChoices.style.display='none';
+      if(upHP>=0){
+        eventText.textContent = `符咒很顺畅地融入了你的体中，经络变得更舒畅了，生命上限提高了3d6-4=${upHP}！豆池看起来对自己的作品很满意。`;
+      }else{
+        unlockAchievement(5);
+        eventText.textContent = `符咒看起来与你有点八字不合，当场就爆炸了，生命上限降低了1点！你回头发现豆池早就跑没影了。`;
+      }
+      
+
+      }
+      if(stage==6){
+        let upHP = rollND(4,4,0)
+        player.maxHp += upHP; player.hp = Math.min(player.maxHp, player.hp + upHP);
+        eventChoices.style.display='none';
+        eventText.textContent = `盖浇饭普普通通，但是很好吃，吃饱该继续探险了。`;
+      }
+      if(stage==8){
+      let chances = roll(100)
+      if(chances<=50 && chances>5){
+      player.maxHp += 15; player.hp = Math.min(player.maxHp, player.hp + 15);
+      player.maxMp += 15; player.mp = Math.min(player.maxMp, player.mp + 15);
+      eventChoices.style.display='none';
+      eventText.textContent = `“运气不错,是${chances}点，要加油哦~”少女两眼发光，你觉得自己的体力和精力都回复并增长了一些，该去直面她了。`;
+      }
+      if(chances>50){
+      player.maxHp += 5; player.hp = Math.min(player.maxHp, player.hp + 5);
+      player.maxMp += 5; player.mp = Math.min(player.maxMp, player.mp + 5);
+      eventChoices.style.display='none';
+      eventText.textContent = `“运气不太好啊，是${chances}点~”少女嘿嘿一笑，你觉得自己的体力和精力都回复并增长了一些，该去直面她了。`;
+      
+      }
+      if(chances<=5){
+        eventImg.src = 'star2.png'
+      player.maxHp += 15; player.hp = Math.min(player.maxHp, player.hp + 15);
+      player.maxMp += 15; player.mp = Math.min(player.maxMp, player.mp + 15);
+      eventChoices.style.display='none';
+      end=1;
+      eventText.textContent = `“${chances}点，是大成功哦，看来另一条路线要为你开启了”少女两眼发光，你觉得自己的体力和精力都回复并增长了一些，该去直面她了。`;
+      }
+      
+      }
+      if(stage==10){
+      eventChoices.style.display='none';
+      eventText.textContent = `“我没事，不好意思啦”萧欣妍莞尔一笑，你觉得眼前的现状美的甚至有点不真实。不管怎么样，她回来了就好。`;
+      if(end==1){
+        eventText.textContent = `“想见你一面可真不容易。”她微笑着“很高兴再见到你。”`;
+      }
+      unlockAchievement(3);
+      }
+      
+      if(player.maxHP>=50){unlockAchievement(6)}
+      const nextBtn = document.createElement('button'); nextBtn.className='btn'; nextBtn.textContent='进入下个楼层'; nextBtn.onclick = ()=>{stage++; startStage()};
+      eventArea.appendChild(nextBtn);
+    }
+    choiceMP.onclick = ()=>{
+      if(stage==2){
+      eventImg.src = 'ye2.png';
+      let upMP = rollND(1,4,0);
+      player.maxMp += upMP; player.mp = Math.min(player.maxMp, player.mp + upMP);
+      eventChoices.style.display='none';
+      eventText.textContent = `这水似乎带有奇异的精神力，法力上限提高了1d4=${upMP}！叶落看着你笑了笑，转身离开了。`;
+    }
+      if(stage==4){
+      let upMP = rollND(1,6,0);
+      player.maxMp += upMP; player.mp = Math.min(player.maxMp, player.mp + upMP);
+      player.hp = player.maxHp;
+      eventChoices.style.display='none';
+      eventText.textContent = `蓝色符咒到底是哪里来的！怎么贴上就动不了了，不过你觉得你的精神好了不少，上限提高了1d6=${upMP}！生命也回复到了上限。`;
+      }
+      if(stage==6){
+        damageplus += 6;
+        
+        eventChoices.style.display='none';
+        eventText.textContent = `“先生，我们这里不卖榴莲披萨，请不要为难我们。”虽然这么说着，但是柏小茶还是偷偷给你送了一份，不过看着这硬邦邦的披萨，真的能吃吗？还是当做武器使吧。`;
+      }
+      if(stage==8){
+      player.maxMp += 10; 
+      player.maxHp += 10; 
+      player.hp = player.maxHp;
+      player.mp = player.maxMp;
+      eventChoices.style.display='none';
+      eventText.textContent = `“看起来你不太愿意冒险，也没关系，祝你好运啦~”少女大手一挥，你觉得自己的体力和精力都回复并增长了一些，该去直面她了。`;
+      }
+      if(stage==10){
+      eventChoices.style.display='none';
+      eventText.textContent = `“我本来想……算啦，最后还是没找到。”萧欣妍看起来有些失落，不过很快又振奋了起来。不管怎么样，她回来了就好。`;
+      if(end==1){
+        eventText.textContent = `“是我。”她微笑着“很高兴再见到你。”`;
+      }
+      unlockAchievement(3);
+      }
+      
+      if(player.maxHP>=50){unlockAchievement(6)}
+      const nextBtn = document.createElement('button'); nextBtn.className='btn'; nextBtn.textContent='进入下个楼层'; nextBtn.onclick = ()=>{stage++; startStage()};
+      eventArea.appendChild(nextBtn);
+    }
+
+    // start a stage
+    function startStage(){
+      // 清理上一关遗留的胜利/失败按钮
+      const extraBtns = Array.from(battleArea.querySelectorAll('button')).filter(b=>!['btnAttack','btnSpell'].includes(b.id));
+      extraBtns.forEach(b=>{ if(b) b.remove() });
+
+      // 如果超过总关卡，游戏结束（胜利）
+      if(stage > totalStages){ finishGame(true);
+         return }
+
+      // 重新生成敌人
+      enemy = createEnemyForStage(stage);
+      // 玩家在每关自动回复一点MP（可调整）
+      //player.mp = Math.min(player.maxMp, player.mp + 1);
+      // 固定先手为玩家
+      playerTurn = true;
+      actionLog.innerHTML='';
+      refreshUI();
+      showScreen('game');
+      // 如果是事件关则初始化事件区域
+      if(stage % 2 === 0){
+        eventChoices.style.display='';
+        // 清除多余的下一关按钮
+        Array.from(eventArea.querySelectorAll('button')).forEach(b=>{ if(b.id!=='choiceHP' && b.id!=='choiceMP') b.remove() })
+      }
+    }
+
+    function finishGame(victory){
+      showScreen('end');
+      if(victory){ endTitle.textContent = '欢迎再来'; endText.textContent = '黑白的百梦大楼'; }
+      else { endTitle.textContent='失败'; endText.textContent='你在地牢中陨落，重新来过吧。'; }
+    }
+
+    function resetGame(){ stage = 1;end=0; if(deathcount>=50){damageplus = 20}else{damageplus = 0};
+    player.hp = 14;
+  player.maxHp = 14;
+  player.mp = 14;
+  player.maxMp = 14;
+  player.atkToHit = 80;
+  player.spellToHit = 70; enemy = createEnemyForStage(stage); actionLog.innerHTML='';stageData.forEach(s=>{ if(s.type==='battle'&&s.enemy) s.enemy.hp=s.enemy.maxHp; }); 
+    const attackBtn = document.getElementById('btnAttack');
+    const spellBtn = document.getElementById('btnSpell');
+    if (attackBtn) {
+      attackBtn.disabled = false;
+      attackBtn.style.opacity = 1;
+      attackBtn.style.cursor = 'pointer';
+    }
+    if (spellBtn) {
+      spellBtn.disabled = false;
+      spellBtn.style.opacity = 1;
+      spellBtn.style.cursor = 'pointer';
+    }}
+
+    // 事件绑定
+    btnStart.onclick = ()=>{ showScreen('story') }
+    btnNextStory.onclick = ()=>{ startStage() }
+    btnAttack.onclick = playerActionAttack
+    btnSpell.onclick = playerActionSpell
+    
+    byId('btnReturnStart').onclick = ()=>{ resetGame(); showScreen('start') }
+
+    // 初始界面刷新
+    refreshUI();
+    loadGameData();
+  </script>
+</body>
+</html>
