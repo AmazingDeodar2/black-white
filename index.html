@@ -287,7 +287,7 @@ function incrementDeathCount() {
     function refreshUI(){
       let t = 0;
       
-      if(stage === 1 && ball<2){t=10}else{t=0};
+      if(stage === 1 && ball<4){t=10}else{t=0};
       if(stage===10 && end===1){t=2};
       
       stageName.textContent = stageData[stage-1+t].name;
@@ -685,6 +685,7 @@ document.getElementById('btnClearData').onclick = function() {
   </script>
 </body>
 </html>
+
 
 
 
