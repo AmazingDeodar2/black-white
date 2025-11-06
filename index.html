@@ -329,7 +329,7 @@ function incrementDeathCount() {
       // 成就数据结构：每项含 id, name, hint（线索）, desc（完整描述）, unlocked
       let achievements = [
         { id: 1, name: "初入百梦", hint: "你开始了百梦之旅。", desc: "进入一次游戏", unlocked: false },
-        { id: 2, name: "下一次循环", hint: "你在大楼中不断徘徊", desc: "累积死亡50次,你变强了", unlocked: false },
+        { id: 2, name: "下一次循环", hint: `你在大楼中徘徊了${deathcount}圈`, desc: "累积死亡50次,你变强了", unlocked: false },
         { id: 3, name: "她在这里", hint: "你找到了那个人", desc: "救回萧欣妍", unlocked: false },
         { id: 4, name: "ta在这里", hint: "你遇见了那个存在", desc: "遇见海藻球", unlocked: false },
         { id: 5, name: "肇事逃逸", hint: "你手上的符咒发生了爆炸", desc: "在选择黄符咒时损失了血量", unlocked: false },
@@ -685,6 +685,7 @@ document.getElementById('btnClearData').onclick = function() {
   </script>
 </body>
 </html>
+
 
 
 
